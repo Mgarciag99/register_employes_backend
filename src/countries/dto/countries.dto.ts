@@ -5,9 +5,6 @@ export class CreateCountryDto {
   @IsString()
   @MinLength(2)
     name: string;
-
-  @IsBoolean()
-    status: boolean;
 }
 
 

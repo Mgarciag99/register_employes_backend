@@ -10,7 +10,7 @@ export class CountriesController {
         return this.countryService.create(CreateCountryDto);
     }
 
-    @Post('update/:id')
+    @Post(':id')
     update(
         @Param('id') id: number,
         @Body() updateCountryDto: UpdateCountryDto
