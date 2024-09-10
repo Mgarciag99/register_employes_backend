@@ -5,10 +5,13 @@ import {
     ManyToOne,
   } from 'typeorm';
 import { Department } from 'src/department/department.entity';
+import { Country } from 'src/countries/countries.entity';
   @Entity({ name: 'municipalities' })
   export class Municipality {
     @PrimaryGeneratedColumn()
     idMunicipality: number;
+    @ManyToOne(() => Country, (country) => country.idCountry)
+    country: Country;
     @ManyToOne(() => Department, (department) => department.idDepartment)
     department: Department;
     @Column()

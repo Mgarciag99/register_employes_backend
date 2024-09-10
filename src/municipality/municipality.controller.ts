@@ -14,25 +14,28 @@ import { ChangeStatusDto, CreateMunicipalityDto, UpdateMunicipalityDto } from '.
 @Controller('municipality')
 export class MunicipalityController {
   constructor(private readonly municipalityService: MunicipalityService) {}
-  @Post('create/:idDepartment')
+  @Post('create/:idDepartment/:idCountry')
   async create(
     @Body() createmunicipalityDto: CreateMunicipalityDto,
     @Param('idDepartment') idDepartment: number,
+    @Param('idCountry') idCountry: number,
+
   ) {
-    return this.municipalityService.create(createmunicipalityDto, idDepartment);
+    return this.municipalityService.create(createmunicipalityDto, idDepartment, idCountry);
   }
 
-  @Post('update/:idMunicipality/:idDepartment')
+  @Post('update/:idMunicipality/:idDepartment/:idCountry')
   async update(
     @Body() updatemunicipalityDto: UpdateMunicipalityDto,
     @Param('idMunicipality') idmunicipality: number,
     @Param('idDepartment') idDepartment: number,
-    
+    @Param('idCountry') idCountry: number,
   ) {
     return this.municipalityService.update(
       updatemunicipalityDto,
       idmunicipality,
       idDepartment,
+      idCountry
     );
   }
 
@@ -52,9 +55,10 @@ export class MunicipalityController {
 
   @Get('municipalities-list')
   async getMunicipalities(
+    @Query('idCountry') idCountry: number, 
     @Query('idDepartment') idDepartment: number, 
   ): Promise<{id: number, name: string}[]> {
-    return this.municipalityService.getMunicipalities(idDepartment);
+    return this.municipalityService.getMunicipalities(idDepartment, idCountry);
   }
 
 }

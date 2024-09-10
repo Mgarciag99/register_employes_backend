@@ -8,6 +8,7 @@ import {
   UpdateMunicipalityDto,
 } from './dto/municipality.dto';
 import { InjectRepository } from '@nestjs/typeorm';
+import { CountriesService } from 'src/countries/countries.service';
 @Injectable()
 export class MunicipalityService {
   constructor(
@@ -15,6 +16,7 @@ export class MunicipalityService {
     private readonly municipalityRepository: Repository<Municipality>,
     private dataSource: DataSource,
     private departmentService: DepartmentService,
+    private countriesService: CountriesService
   ) {}
   async findOne(idMunicipality: number) {
     return await this.dataSource.getRepository(Municipality).findOne({
@@ -25,10 +27,13 @@ export class MunicipalityService {
   async create(
     CreateMunicipalityDto: CreateMunicipalityDto,
     idDepartment: number,
+    idCountry: number
   ) {
     try {
       const department = await this.departmentService.findOne(idDepartment);
-      if (!department) {
+      const country = await this.countriesService.findOne(idCountry);
+
+      if (!department && !country) {
         throw new HttpException(
           {
             statusCode: HttpStatus.NOT_FOUND,
@@ -45,6 +50,7 @@ export class MunicipalityService {
         .values({
           ...CreateMunicipalityDto,
           department,
+          country,
           status: true,
         })
         .execute();
@@ -70,13 +76,14 @@ export class MunicipalityService {
     updateDepartmentDto: UpdateMunicipalityDto,
     idMunicipality: number,
     idDepartment: number,
+    idCountry: number
   ) {
     try {
       const department = await this.departmentService.findOne(idDepartment);
-
+      const country = await this.countriesService.findOne(idCountry);
       const municipality = await this.findOne(idMunicipality);
 
-      if (!department || !municipality) {
+      if (!department || !municipality || !country) {
         throw new HttpException(
           {
             statusCode: HttpStatus.NOT_FOUND,
@@ -91,6 +98,7 @@ export class MunicipalityService {
         .set({
           ...updateDepartmentDto,
           department,
+          country
         })
         .where('idMunicipality = :idMunicipality', { idMunicipality })
         .execute();
@@ -163,20 +171,22 @@ export class MunicipalityService {
       const [municipalities, total] = await this.dataSource
       .getRepository(Municipality)
       .createQueryBuilder('municipality')
-      .leftJoinAndSelect('municipality.department', 'department') 
+      .leftJoinAndSelect('municipality.department', 'department')
+      .leftJoinAndSelect('municipality.country', 'country') 
       .select([
         'municipality.idMunicipality',
         'municipality.name',
         'municipality.status',
         'municipality.updatedAt',
         'municipality.createdAt',
-        'department.idDepartment', 
+        'department.idDepartment',
+        'country.idCountry' 
       ])
       .where(filter)
       .skip(skip)
       .take(limit)
       .orderBy('municipality.createdAt', 'DESC')
-      .getManyAndCount(); 
+      .getManyAndCount();
 
     const formattedMunicipalities = municipalities.map(municipality => ({
       idMunicipality: municipality.idMunicipality,
@@ -184,7 +194,8 @@ export class MunicipalityService {
       status: municipality.status,
       updatedAt: municipality.updatedAt,
       createdAt: municipality.createdAt,
-      idDepartment: municipality.department.idDepartment 
+      idDepartment: municipality.department.idDepartment,
+      idCountry: municipality.country.idCountry
     }));
 
       return {
@@ -200,7 +211,7 @@ export class MunicipalityService {
     }
   }
 
-  async getMunicipalities(idDepartment?: number): Promise<any[]> {
+  async getMunicipalities(idDepartment?: number, idCountry?: number): Promise<any[]> {
     const queryBuilder =  this.municipalityRepository
       .createQueryBuilder('municipality')
       .select([
@@ -210,6 +221,11 @@ export class MunicipalityService {
 
       if (idDepartment) {
         queryBuilder.where('municipality.department.idDepartment = :idDepartment', { idDepartment });
+      }
+
+      if(idCountry){
+        queryBuilder.where('municipality.country.idCountry = :idCountry', { idCountry });
+
       }
 
       return queryBuilder.getRawMany();  

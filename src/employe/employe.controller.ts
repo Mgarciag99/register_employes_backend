@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   Post,
+  Put,
   Query,
 } from '@nestjs/common';
 import { EmployeService } from './employe.service';
@@ -16,12 +17,12 @@ import {
 @Controller('employee')
 export class EmployeController {
   constructor(private readonly employeService: EmployeService) {}
-  @Post('create')
+  @Post('')
   create(@Body() createEmployeeDto: CreateEmployeeDto) {
     return this.employeService.create(createEmployeeDto);
   }
 
-  @Post('update/:idEmployee')
+  @Post(':idEmployee')
   update(
     @Body() updatemunicipalityDto: UpdateEmployeeDto,
     @Param('idEmployee') idEmployee: number,
@@ -29,13 +30,16 @@ export class EmployeController {
     return this.employeService.update(updatemunicipalityDto, idEmployee);
   }
 
-  @Delete('delete/:id')
+  @Put('delete/:id')
   delete(@Param('id') id: number, @Body() changeStatusDto: ChangeStatusDto) {
     return this.employeService.changeStatus(changeStatusDto, id);
   }
 
   @Get()
-  getAll(@Query('page') page: number = 1, @Query('limit') limit: number = 10) {
-    return this.employeService.getAll(page, limit);
+  getAll(
+    @Query('search') search: string = '',
+    @Query('page') page: number = 1, 
+    @Query('limit') limit: number = 10) {
+    return this.employeService.getAll(search, page, limit);
   }
 }

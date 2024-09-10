@@ -1,5 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { DataSource } from 'typeorm';
+import { DataSource, ILike } from 'typeorm';
 import { Employe } from './employe.entity';
 import {
   ChangeStatusDto,
@@ -122,13 +122,21 @@ export class EmployeService {
     }
   }
 
-  async getAll(page: number = 1, limit: number = 10) {
+  async getAll(search: string, page: number = 1, limit: number = 10) {
     const skip = (page - 1) * limit;
 
     try {
+
+      const filter: any = {};
+        
+      if (search) {
+        filter.name = ILike(`%${search}%`);
+      }
+
       const [countries, total] = await this.dataSource
         .getRepository(Employe)
         .findAndCount({
+          where: filter,
           skip,
           take: limit,
           order: { createdAt: 'DESC' }, // Optional: adjust ordering as needed

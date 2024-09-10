@@ -2,7 +2,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CountriesService } from 'src/countries/countries.service';
 import { DepartmentService } from 'src/department/department.service';
 import { MunicipalityService } from 'src/municipality/municipality.service';
-import { DataSource } from 'typeorm';
+import { DataSource, ILike } from 'typeorm';
 import { ChangeStatusDto, CreateCompanyDto, UpdateCompanyDto } from './dto/company.dto';
 import { Company } from './company.entity';
 
@@ -126,6 +126,7 @@ export class CompanyService {
           municipality,
           country
         })
+        .where('idCompany = :idCompany', { idCompany })
         .execute();
       return {
         idCompany,
@@ -183,20 +184,43 @@ export class CompanyService {
     }
   }
 
-  async getAll(page: number = 1, limit: number = 10) {
+  async getAll(search: string, page: number = 1, limit: number = 10) {
     const skip = (page - 1) * limit;
 
     try {
-      const [countries, total] = await this.dataSource
+      const filter: any = {};
+        
+      if (search) {
+        filter.legalName = ILike(`%${search}%`);
+      }
+      
+      const [companies, total] = await this.dataSource
         .getRepository(Company)
         .findAndCount({
+          where: filter,
           skip,
           take: limit,
-          order: { createdAt: 'DESC' }, // Optional: adjust ordering as needed
+          order: { createdAt: 'DESC' },
+          relations: ['country', 'department', 'municipality'],
         });
 
+        const data = companies.map(company => ({
+          idCompany: company.idCompany,
+          nit: company.nit,
+          legalName: company.legalName,
+          comercialName: company.comercialName,
+          phoneNumber: company.phoneNumber,
+          email: company.email,
+          status: company.status,
+          idCountry: company.country ? company.country.idCountry : null, // Include idCountry
+          idDepartment: company.department ? company.department.idDepartment : null, // Include idDepartment
+          idMunicipality: company.municipality ? company.municipality.idMunicipality : null, // Include idMunicipality
+          updatedAt: company.updatedAt,
+          createdAt: company.createdAt,
+      }));
+
       return {
-        data: countries,
+        data,
         total,
         page,
         lastPage: Math.ceil(total / limit),
