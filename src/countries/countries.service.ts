@@ -1,15 +1,20 @@
 import { HttpException, Injectable, HttpStatus } from '@nestjs/common';
-import { DataSource } from 'typeorm';
+import { DataSource, ILike, Repository } from 'typeorm';
 import {
   ChangeStatusDto,
   CreateCountryDto,
   UpdateCountryDto,
 } from './dto/countries.dto';
 import { Country } from './countries.entity';
+import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class CountriesService {
-  constructor(private dataSource: DataSource) {}
+  constructor(
+    @InjectRepository(Country)
+    private readonly countryRepository: Repository<Country>,
+    private dataSource: DataSource
+  ) {}
 
   async create(createCountryDto: CreateCountryDto) {
     try {
@@ -122,13 +127,20 @@ export class CountriesService {
     }
   }
 
-  async getAll(page: number = 1, limit: number = 10) {
+  async getAll(search: string, page: number = 1, limit: number = 10) {
     const skip = (page - 1) * limit;
 
     try {
+        const filter: any = {};
+        
+        if (search) {
+          filter.name = ILike(`%${search}%`);
+        }
+
       const [countries, total] = await this.dataSource
         .getRepository(Country)
         .findAndCount({
+          where: filter,
           skip,
           take: limit,
           order: { createdAt: 'DESC' }, // Optional: adjust ordering as needed
@@ -146,4 +158,15 @@ export class CountriesService {
       throw new Error('Could not fetch paginated countries');
     }
   }
+
+  async getCountries(): Promise<any[]> {
+    return this.countryRepository
+      .createQueryBuilder('country')
+      .select([
+        'country.idCountry AS id', // Aliasing idCountry to id
+        'country.name AS name',    // Aliasing name to name
+      ])
+      .getRawMany(); // Use getRawMany to get raw data
+  }
+
 }

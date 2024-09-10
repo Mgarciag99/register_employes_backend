@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
 import { ChangeStatusDto, CreateCountryDto, UpdateCountryDto } from './dto/countries.dto';
 import { CountriesService } from './countries.service';
 
@@ -18,7 +18,7 @@ export class CountriesController {
         return this.countryService.update(updateCountryDto, id);
     }
 
-    @Delete('delete/:id')
+    @Put('delete/:id')
     delete(
         @Param('id') id: number,
         @Body() changeStatusDto: ChangeStatusDto
@@ -28,10 +28,16 @@ export class CountriesController {
 
     @Get()
     getAll(
+        @Query('search') search: string = '',
         @Query('page') page: number = 1,
         @Query('limit') limit: number = 10
     ){
-        return this.countryService.getAll(page, limit);
+        return this.countryService.getAll(search, page, limit);
+    }
+
+    @Get('countries-list')
+    async getCountries(): Promise<{id: number, name: string}[]> {
+      return this.countryService.getCountries();
     }
 
 }

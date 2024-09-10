@@ -1,5 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { DataSource } from 'typeorm';
+import { DataSource, ILike } from 'typeorm';
 import { ChangeStatusDto, CreateDepartmentDto, UpdateDepartmentDto } from './dto/department.dto';
 import { Department } from './department.entity';
 import { CountriesService } from 'src/countries/countries.service';
@@ -117,7 +117,7 @@ export class DepartmentService {
       }
       await this.dataSource.manager
         .createQueryBuilder()
-        .update(department)
+        .update(Department)
         .set({
           ...changeStatusDto,
         })
@@ -141,20 +141,45 @@ export class DepartmentService {
     }
   }
 
-  async getAll(page: number = 1, limit: number = 10) {
+  async getAll(search: string, page: number = 1, limit: number = 10) {
     const skip = (page - 1) * limit;
 
     try {
-      const [countries, total] = await this.dataSource
+      const filter: any = {};
+        
+        if (search) {
+          filter.name = ILike(`%${search}%`);
+        }
+
+        const [departments, total] = await this.dataSource
         .getRepository(Department)
-        .findAndCount({
-          skip,
-          take: limit,
-          order: { createdAt: 'DESC' }, // Optional: adjust ordering as needed
-        });
+        .createQueryBuilder('department')
+        .leftJoinAndSelect('department.country', 'country')
+        .select([
+          'department.idDepartment',
+          'department.name',
+          'department.status',
+          'department.updatedAt',
+          'department.createdAt',
+          'country.idCountry', 
+        ])
+        .where(filter)
+        .skip(skip)
+        .take(limit)
+        .orderBy('department.createdAt', 'DESC')
+        .getManyAndCount(); 
+
+        const formattedDepartments = departments.map(department => ({
+          idDepartment: department.idDepartment,
+          name: department.name,
+          status: department.status,
+          updatedAt: department.updatedAt,
+          createdAt: department.createdAt,
+          idCountry: department.country.idCountry
+        }));
 
       return {
-        data: countries,
+        data: formattedDepartments,
         total,
         page,
         lastPage: Math.ceil(total / limit),

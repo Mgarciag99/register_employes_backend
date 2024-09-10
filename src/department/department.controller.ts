@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
 import { ChangeStatusDto, CreateDepartmentDto, UpdateDepartmentDto } from './dto/department.dto';
 import { DepartmentService } from './department.service';
 
@@ -10,7 +10,7 @@ export class DepartmentController {
     return this.departmentService.create(createDepartmentDto);
   }
 
-  @Post('update/:id')
+  @Post(':id')
   update(
     @Body() updateDepartmentDto: UpdateDepartmentDto,
     @Param('id') idDepartment: number,
@@ -18,7 +18,7 @@ export class DepartmentController {
     return this.departmentService.update(updateDepartmentDto, idDepartment);
   }
 
-  @Delete('delete/:id')
+  @Put('delete/:id')
   delete(
       @Param('id') id: number,
       @Body() changeStatusDto: ChangeStatusDto
@@ -28,9 +28,10 @@ export class DepartmentController {
 
   @Get()
   getAll(
+      @Query('search') search: string = '',
       @Query('page') page: number = 1,
       @Query('limit') limit: number = 10
   ){
-      return this.departmentService.getAll(page, limit);
+      return this.departmentService.getAll(search, page, limit);
   }
 }
