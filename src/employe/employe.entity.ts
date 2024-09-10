@@ -4,6 +4,7 @@ import {
     Column,
     PrimaryGeneratedColumn,
     ManyToMany,
+    JoinTable,
 } from 'typeorm';
   @Entity({ name: 'employes' })
   export class Employe {
@@ -23,7 +24,7 @@ import {
     email: string;
     @Column()
     status: boolean;
-    @ManyToMany(() => Company, company => company.idCompany)
+    @ManyToMany(() => Company, company => company.employees)
     companies: Company[];
     @Column({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
     updatedAt: Date;

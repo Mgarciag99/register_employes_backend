@@ -33,5 +33,20 @@ export class CompanyController {
     return this.companyService.getAll(search, page, limit);
   }
 
+  @Get('assignation')
+  getComaniesAssigned(
+    @Query('idEmploye') employeeId: number, 
+  ) {
+    return this.companyService.getCompaniesWithCheck(employeeId);
+  }
+
+  @Post('assignOne/:idEmploye/:idCompany')
+  assignCompanyToEmployee(
+    @Param('idEmploye') employeeId: number,
+    @Param('idCompany') companyId: number,
+  ) {
+    return this.companyService.assignCompanyToEmployee(employeeId, companyId);
+  }
+
 
 }

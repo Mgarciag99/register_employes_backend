@@ -33,7 +33,7 @@ export class Company {
   @Column()
   status: boolean;
   @ManyToMany(() => Employe, employe => employe.companies)
-  @JoinTable() // Define the join table here
+  @JoinTable()
   employees: Employe[];
   @Column({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
   updatedAt: Date;
