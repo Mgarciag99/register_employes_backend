@@ -1,12 +1,15 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { DataSource, ILike } from 'typeorm';
+import { DataSource, ILike, Repository } from 'typeorm';
 import { ChangeStatusDto, CreateDepartmentDto, UpdateDepartmentDto } from './dto/department.dto';
 import { Department } from './department.entity';
 import { CountriesService } from 'src/countries/countries.service';
+import { InjectRepository } from '@nestjs/typeorm';
 
 @Injectable()
 export class DepartmentService {
   constructor(
+    @InjectRepository(Department)
+    private readonly departmentRepository: Repository<Department>,
     private dataSource: DataSource,
     private countriesService: CountriesService,
   ) {}
@@ -145,7 +148,7 @@ export class DepartmentService {
     const skip = (page - 1) * limit;
 
     try {
-      const filter: any = {};
+        const filter: any = {};
         
         if (search) {
           filter.name = ILike(`%${search}%`);
@@ -189,6 +192,21 @@ export class DepartmentService {
       console.error('Error fetching paginated data', error);
       throw new Error('Could not fetch paginated departments');
     }
+  }
+
+  async getDepartments(idCountry?: number): Promise<any[]> {
+    const queryBuilder =  this.departmentRepository
+      .createQueryBuilder('department')
+      .select([
+        'department.idDepartment AS id', 
+        'department.name AS name',    
+      ])
+
+      if (idCountry) {
+        queryBuilder.where('department.country.idCountry = :idCountry', { idCountry });
+      }
+
+      return queryBuilder.getRawMany();  
   }
 
 }

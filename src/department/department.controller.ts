@@ -34,4 +34,12 @@ export class DepartmentController {
   ){
       return this.departmentService.getAll(search, page, limit);
   }
+
+  @Get('departments-list')
+  async getDepartments(
+    @Query('idCountry') idCountry: number, 
+  ): Promise<{id: number, name: string}[]> {
+    return this.departmentService.getDepartments(idCountry);
+  }
+
 }
